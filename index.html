@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Авторынок Душанбе</title>
+    <style>
+        :root { --primary: #e74c3c; --dark: #2c3e50; --light: #ecf0f1; --success: #27ae60; --gray: #7f8c8d; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: #f8f9fa; color: #333; }
+        
+        header { background-color: var(--dark); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 24px; font-weight: bold; cursor: pointer; }
+        .btn { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn:hover { background-color: #c0392b; }
+        
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        
+        .view { display: none; animation: fadeIn 0.3s; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .filters { background: white; padding: 20px; border-radius: 10px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+        .filters select { padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-size: 16px; min-width: 200px; }
+        .reset-btn { background-color: var(--dark); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+
+        .car-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .car-card { background: white; border-radius: 10px; overflow: hidden; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); transition: 0.2s; }
+        .car-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .car-card img { width: 100%; height: 200px; object-fit: cover; background-color: #eee; }
+        .car-info { padding: 15px; }
+        .car-price { color: var(--success); font-size: 22px; font-weight: bold; margin-bottom: 5px; }
+        .car-title { font-size: 18px; margin-bottom: 10px; }
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; margin-bottom: 10px; color: white; }
+        .badge-dealer { background-color: #3498db; }
+        .badge-private { background-color: #f39c12; }
+        .seller-info { font-size: 14px; margin-top: 10px; color: #2c3e50; font-weight: 500; }
+        .location-info { font-size: 14px; margin-top: 5px; color: var(--gray); }
+
+        .details-container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 30px; }
+        .details-img { flex: 1; min-width: 300px; }
+        .details-img img { width: 100%; border-radius: 10px; object-fit: cover; }
+        .details-info { flex: 1; min-width: 300px; }
+        
+        .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; background: #f8f9fa; padding: 20px; border-radius: 10px; }
+        .spec-item { border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .spec-label { color: var(--gray); font-size: 14px; display: block; }
+        .spec-value { font-weight: bold; font-size: 16px; color: #333; }
+
+        .contact-box { background: #f1f2f6; padding: 20px; border-radius: 10px; margin-top: 20px; border-left: 5px solid var(--primary); }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 15px; }
+        
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" onclick="switchView('home')">🚗 Авто Душанбе</div>
+        <button class="btn" onclick="switchView('add')">+ Разместить авто</button>
+    </header>
+
+    <div class="container">
+        
+        <!-- Главный экран -->
+        <div id="view-home" class="view active">
+            <div class="filters">
+                <div>
+                    <label style="font-weight: bold; margin-right: 10px;">Марка:</label>
+                    <select id="filter-brand" onchange="renderCars()">
+                        <option value="all">Все марки</option>
+                        <option value="Toyota">Toyota</option>
+                        <option value="Mercedes-Benz">Mercedes-Benz</option>
+                        <option value="BMW">BMW</option>
+                        <option value="Opel">Opel</option>
+                        <option value="Hyundai">Hyundai</option>
+                        <option value="Honda">Honda</option>
+                        <option value="Land Rover">Range Rover</option>
+                        <option value="Lamborghini">Lamborghini</option>
+                        <option value="Электромобили">Электромобили (BYD, Zeekr)</option>
+                    </select>
+                </div>
+                <button class="reset-btn" onclick="resetDatabase()">Сбросить базу (Тест)</button>
+            </div>
+            <div class="car-grid" id="car-list"></div>
+        </div>
+
+        <!-- Экран детального просмотра -->
+        <div id="view-details" class="view">
+            <button class="btn" onclick="switchView('home')" style="margin-bottom: 20px; background-color: var(--gray);">← Назад к списку</button>
+            <div class="details-container" id="details-content"></div>
+        </div>
+
+        <!-- Экран добавления -->
+        <div id="view-add" class="view">
+            <button class="btn" onclick="switchView('home')" style="margin-bottom: 20px; background-color: var(--gray);">← Назад</button>
+            <div class="details-container" style="display: block; max-width: 800px; margin: 0 auto;">
+                <h2>Добавить автомобиль</h2>
+                <p style="color: var(--gray); margin-bottom: 20px;">Заполните все характеристики вашей машины</p>
+                
+                <form onsubmit="handleAddCar(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Марка</label>
+                            <select id="add-brand" required>
+                                <option value="Toyota">Toyota</option>
+                                <option value="Mercedes-Benz">Mercedes-Benz</option>
+                                <option value="BMW">BMW</option>
+                                <option value="Opel">Opel</option>
+                                <option value="Hyundai">Hyundai</option>
+                                <option value="Honda">Honda</option>
+                                <option value="Land Rover">Range Rover</option>
+                                <option value="Lamborghini">Lamborghini</option>
+                                <option value="Электромобили">Электромобили</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Модель</label><input type="text" id="add-model" required placeholder="Например: Camry"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group"><label>Цена (сомони)</label><input type="number" id="add-price" min="1000" max="10000000" required></div>
+                        <div class="form-group"><label>Год выпуска</label><input type="number" id="add-year" min="1950" max="2026" required></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Тип кузова</label>
+                            <select id="add-body" required>
+                                <option value="Легковая (Седан)">Легковая (Седан)</option>
+                                <option value="Внедорожник (Джип)">Внедорожник (Джип/Кроссовер)</option>
+                                <option value="Универсал">Универсал</option>
+                                <option value="Хэтчбек">Хэтчбек</option>
+                                <option value="Пикап">Пикап</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Тип двигателя</label>
+                            <select id="add-fuel" required>
+                                <option value="Бензин">Бензин</option>
+                                <option value="Электро">Электрический (Электро)</option>
+                                <option value="Дизель">Дизель</option>
+                                <option value="Гибрид">Гибрид</option>
+                                <option value="Газ/Бензин">Газ/Бензин</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group"><label>Объем двигателя (литры)</label><input type="text" id="add-engine" required placeholder="Например: 2.5 л"></div>
+                        <div class="form-group"><label>Мощность (лошадиные силы)</label><input type="text" id="add-power" required placeholder="Например: 200 л.с."></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Коробка передач</label>
+                            <select id="add-transmission" required>
+                                <option value="Автомат">Автомат</option>
+                                <option value="Механика">Механика</option>
+                                <option value="Робот">Робот</option>
+                                <option value="Вариатор">Вариатор</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Привод</label>
+                            <select id="add-drive" required>
+                                <option value="Передний">Передний</option>
+                                <option value="Задний">Задний</option>
+                                <option value="Полный (4x4)">Полный (4x4)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group"><label>Ссылка на фото машины (только URL)</label><input type="url" id="add-photo" required placeholder="https://..."></div>
+                    
+                    <hr style="margin: 20px 0; border: 1px solid #eee;">
+                    
+                    <div class="form-row">
+                        <div class="form-group"><label>Ваше Имя (только буквы)</label><input type="text" id="add-name" required placeholder="Иван Иванов"></div>
+                        <div class="form-group"><label>Номер телефона</label><input type="text" id="add-phone" required placeholder="+992..."></div>
+                    </div>
+                    <div class="form-group"><label>Район / Адрес осмотра</label><input type="text" id="add-location" required placeholder="Например: Душанбе, 82 мкр"></div>
+                    
+                    <button type="submit" class="btn" style="width: 100%; padding: 15px; font-size: 18px;">Опубликовать объявление</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const defaultCars = [
+            { id: 1, brand: 'Toyota', model: 'Camry', price: 350000, year: 2023, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '2.5 л', power: '206 л.с.', transmission: 'Автомат', drive: 'Передний', img: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800', isDealership: true, seller: 'Тойота Центр Таджикистан', phone: '+992 44 600 8888', location: 'Душанбе, Хувайдуллоева 47/1' },
+            { id: 2, brand: 'Toyota', model: 'Land Cruiser 300', price: 1200000, year: 2023, body: 'Внедорожник (Джип)', fuel: 'Бензин', engine: '3.5 л', power: '415 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800', isDealership: true, seller: 'Тойота Центр Таджикистан', phone: '+992 44 600 8888', location: 'Душанбе, Хувайдуллоева 47/1' },
+            { id: 3, brand: 'Toyota', model: 'RAV4', price: 420000, year: 2022, body: 'Внедорожник (Кроссовер)', fuel: 'Бензин', engine: '2.0 л', power: '149 л.с.', transmission: 'Вариатор', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800', isDealership: true, seller: 'Тойота Центр Таджикистан', phone: '+992 44 600 8888', location: 'Душанбе, Хувайдуллоева 47/1' },
+            { id: 4, brand: 'Toyota', model: 'Corolla', price: 250000, year: 2021, body: 'Легковая (Седан)', fuel: 'Гибрид', engine: '1.8 л', power: '122 л.с.', transmission: 'Вариатор', drive: 'Передний', img: 'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800', isDealership: true, seller: 'Тойота Центр Таджикистан', phone: '+992 44 600 8888', location: 'Душанбе, Хувайдуллоева 47/1' },
+            { id: 5, brand: 'Toyota', model: 'Highlander', price: 580000, year: 2022, body: 'Внедорожник (Кроссовер)', fuel: 'Бензин', engine: '3.5 л', power: '295 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800', isDealership: true, seller: 'Тойота Центр Таджикистан', phone: '+992 44 600 8888', location: 'Душанбе, Хувайдуллоева 47/1' },
+
+            { id: 6, brand: 'Hyundai', model: 'Sonata', price: 340000, year: 2023, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '2.5 л', power: '180 л.с.', transmission: 'Автомат', drive: 'Передний', img: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800', isDealership: true, seller: 'Hyundai Auto Tajikistan', phone: '+992 44 630 0000', location: 'Душанбе, пр. С. Шерози 11' },
+            { id: 7, brand: 'Hyundai', model: 'Tucson', price: 380000, year: 2023, body: 'Внедорожник (Кроссовер)', fuel: 'Бензин', engine: '2.0 л', power: '150 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800', isDealership: true, seller: 'Hyundai Auto Tajikistan', phone: '+992 44 630 0000', location: 'Душанбе, пр. С. Шерози 11' },
+            { id: 8, brand: 'Hyundai', model: 'Elantra', price: 290000, year: 2022, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '1.6 л', power: '128 л.с.', transmission: 'Автомат', drive: 'Передний', img: 'https://images.unsplash.com/photo-1541348263662-e08266f92f3a?w=800', isDealership: true, seller: 'Hyundai Auto Tajikistan', phone: '+992 44 630 0000', location: 'Душанбе, пр. С. Шерози 11' },
+            { id: 9, brand: 'Hyundai', model: 'Santa Fe', price: 460000, year: 2023, body: 'Внедорожник (Кроссовер)', fuel: 'Бензин', engine: '2.5 л', power: '180 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800', isDealership: true, seller: 'Hyundai Auto Tajikistan', phone: '+992 44 630 0000', location: 'Душанбе, пр. С. Шерози 11' },
+            { id: 10, brand: 'Hyundai', model: 'Palisade', price: 750000, year: 2022, body: 'Внедорожник (Джип)', fuel: 'Бензин', engine: '3.5 л', power: '249 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800', isDealership: true, seller: 'Hyundai Auto Tajikistan', phone: '+992 44 630 0000', location: 'Душанбе, пр. С. Шерози 11' },
+
+            { id: 11, brand: 'Электромобили', model: 'BYD Song Plus', price: 320000, year: 2023, body: 'Внедорожник (Кроссовер)', fuel: 'Электро', engine: 'Электродвигатель', power: '218 л.с.', transmission: 'Автомат', drive: 'Передний', img: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800', isDealership: true, seller: 'BYD Tajikistan', phone: '+992 90 111 2233', location: 'Душанбе, ул. Айни' },
+            { id: 12, brand: 'Электромобили', model: 'BYD Han EV', price: 450000, year: 2023, body: 'Легковая (Седан)', fuel: 'Электро', engine: 'Электродвигатель', power: '494 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800', isDealership: true, seller: 'BYD Tajikistan', phone: '+992 90 111 2233', location: 'Душанбе, ул. Айни' },
+            { id: 13, brand: 'Электромобили', model: 'BYD Tang EV', price: 510000, year: 2022, body: 'Внедорожник (Кроссовер)', fuel: 'Электро', engine: 'Электродвигатель', power: '517 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800', isDealership: true, seller: 'BYD Tajikistan', phone: '+992 90 111 2233', location: 'Душанбе, ул. Айни' },
+
+            { id: 14, brand: 'Электромобили', model: 'Zeekr 001', price: 580000, year: 2023, body: 'Универсал', fuel: 'Электро', engine: 'Электродвигатель', power: '544 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800', isDealership: true, seller: 'Eco Cars Tajikistan', phone: '+992 98 777 5555', location: 'Душанбе, пр. Рудаки' },
+            { id: 15, brand: 'Электромобили', model: 'Zeekr X', price: 390000, year: 2023, body: 'Внедорожник (Кроссовер)', fuel: 'Электро', engine: 'Электродвигатель', power: '428 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1553440569-bcc63803a83d?w=800', isDealership: true, seller: 'Eco Cars Tajikistan', phone: '+992 98 777 5555', location: 'Душанбе, пр. Рудаки' },
+
+            { id: 16, brand: 'Mercedes-Benz', model: 'G-Class AMG 63', price: 1800000, year: 2022, body: 'Внедорожник (Джип)', fuel: 'Бензин', engine: '4.0 л', power: '585 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1520050206274-a1ae44613e6d?w=800', isDealership: true, seller: 'Taj Motors Premium', phone: '+992 00 500 0000', location: 'Душанбе, ул. Бохтар' },
+            { id: 17, brand: 'Mercedes-Benz', model: 'S-Class S500', price: 1500000, year: 2021, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '3.0 л', power: '435 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800', isDealership: true, seller: 'Taj Motors Premium', phone: '+992 00 500 0000', location: 'Душанбе, ул. Бохтар' },
+            { id: 18, brand: 'Mercedes-Benz', model: 'E-Class E200', price: 650000, year: 2020, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '2.0 л', power: '197 л.с.', transmission: 'Автомат', drive: 'Задний', img: 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800', isDealership: true, seller: 'Taj Motors Premium', phone: '+992 00 500 0000', location: 'Душанбе, ул. Бохтар' },
+            { id: 19, brand: 'Mercedes-Benz', model: 'C-Class', price: 420000, year: 2019, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '1.5 л', power: '184 л.с.', transmission: 'Автомат', drive: 'Задний', img: 'https://images.unsplash.com/photo-1616422285623-13ff0162193c?w=800', isDealership: true, seller: 'Taj Motors Premium', phone: '+992 00 500 0000', location: 'Душанбе, ул. Бохтар' },
+            { id: 20, brand: 'Land Rover', model: 'Range Rover Vogue', price: 1100000, year: 2021, body: 'Внедорожник (Джип)', fuel: 'Бензин', engine: '3.0 л', power: '360 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800', isDealership: true, seller: 'Taj Motors Premium', phone: '+992 00 500 0000', location: 'Душанбе, ул. Бохтар' },
+
+            { id: 21, brand: 'BMW', model: 'X5 M', price: 950000, year: 2021, body: 'Внедорожник (Кроссовер)', fuel: 'Бензин', engine: '4.4 л', power: '625 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800', isDealership: true, seller: 'Автоцентр Рахш', phone: '+992 37 222 3344', location: 'Душанбе, ул. Н. Карабаева' },
+            { id: 22, brand: 'BMW', model: 'X7', price: 1250000, year: 2022, body: 'Внедорожник (Джип)', fuel: 'Бензин', engine: '3.0 л', power: '340 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1556189250-72ba954cfc2b?w=800', isDealership: true, seller: 'Автоцентр Рахш', phone: '+992 37 222 3344', location: 'Душанбе, ул. Н. Карабаева' },
+            { id: 23, brand: 'BMW', model: 'M5 Competition', price: 1100000, year: 2021, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '4.4 л', power: '625 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800', isDealership: true, seller: 'Автоцентр Рахш', phone: '+992 37 222 3344', location: 'Душанбе, ул. Н. Карабаева' },
+            { id: 24, brand: 'BMW', model: '3 Series', price: 410000, year: 2020, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '2.0 л', power: '184 л.с.', transmission: 'Автомат', drive: 'Задний', img: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800', isDealership: true, seller: 'Автоцентр Рахш', phone: '+992 37 222 3344', location: 'Душанбе, ул. Н. Карабаева' },
+
+            { id: 25, brand: 'Honda', model: 'CR-V', price: 380000, year: 2021, body: 'Внедорожник (Кроссовер)', fuel: 'Бензин', engine: '2.4 л', power: '186 л.с.', transmission: 'Вариатор', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1609521263047-f8d205293f24?w=800', isDealership: true, seller: 'Honda Center Dushanbe', phone: '+992 92 100 2020', location: 'Душанбе, ул. Джаббора Расулова' },
+            { id: 26, brand: 'Honda', model: 'Accord', price: 350000, year: 2020, body: 'Легковая (Седан)', fuel: 'Бензин', engine: '2.0 л', power: '252 л.с.', transmission: 'Автомат', drive: 'Передний', img: 'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800', isDealership: true, seller: 'Honda Center Dushanbe', phone: '+992 92 100 2020', location: 'Душанбе, ул. Джаббора Расулова' },
+
+            { id: 27, brand: 'Opel', model: 'Astra', price: 180000, year: 2018, body: 'Хэтчбек', fuel: 'Бензин', engine: '1.4 л', power: '150 л.с.', transmission: 'Автомат', drive: 'Передний', img: 'https://images.unsplash.com/photo-1541348263662-e08266f92f3a?w=800', isDealership: true, seller: 'Автосалон Лесинвест', phone: '+992 37 236 0011', location: 'Душанбе, ул. Каххарова' },
+            { id: 28, brand: 'Opel', model: 'Zafira', price: 210000, year: 2017, body: 'Универсал', fuel: 'Дизель', engine: '2.0 л', power: '170 л.с.', transmission: 'Автомат', drive: 'Передний', img: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800', isDealership: true, seller: 'Автосалон Лесинвест', phone: '+992 37 236 0011', location: 'Душанбе, ул. Каххарова' },
+
+            { id: 29, brand: 'Lamborghini', model: 'Urus', price: 3500000, year: 2022, body: 'Внедорожник (Кроссовер)', fuel: 'Бензин', engine: '4.0 л', power: '650 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?w=800', isDealership: true, seller: 'Exclusive Auto Dushanbe', phone: '+992 90 999 9999', location: 'Душанбе, Центр' },
+            { id: 30, brand: 'Land Rover', model: 'Range Rover Evoque', price: 550000, year: 2020, body: 'Внедорожник (Кроссовер)', fuel: 'Бензин', engine: '2.0 л', power: '249 л.с.', transmission: 'Автомат', drive: 'Полный (4x4)', img: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800', isDealership: true, seller: 'Exclusive Auto Dushanbe', phone: '+992 90 999 9999', location: 'Душанбе, Центр' }
+        ];
+
+        let cars = [];
+        if (localStorage.getItem('avtoMarketCars')) {
+            cars = JSON.parse(localStorage.getItem('avtoMarketCars'));
+        } else {
+            cars = [...defaultCars];
+            saveToStorage();
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('avtoMarketCars', JSON.stringify(cars));
+        }
+
+        function resetDatabase() {
+            if(confirm("Вы уверены, что хотите обновить базу до 30 исходных машин? Все вручную добавленные авто будут удалены.")) {
+                cars = [...defaultCars];
+                saveToStorage();
+                renderCars();
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, function(tag) {
+                const charsToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+                return charsToReplace[tag] || tag;
+            });
+        }
+
+        function renderCars() {
+            const list = document.getElementById('car-list');
+            const brandFilter = document.getElementById('filter-brand').value;
+            list.innerHTML = '';
+            
+            const filteredCars = cars.filter(c => brandFilter === 'all' || c.brand === brandFilter);
+
+            filteredCars.forEach(car => {
+                const badge = car.isDealership ? '<span class="badge badge-dealer">✓ Автосалон</span>' : '<span class="badge badge-private">⚠️ Частное лицо</span>';
+                const formattedPrice = car.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                const sellerTitle = car.isDealership ? `🏢 ${car.seller}` : `👤 ${car.seller}`;
+
+                list.innerHTML += `
+                    <div class="car-card" onclick="openDetails(${car.id})">
+                        <img src="${car.img}" alt="${car.model}" onerror="this.onerror=null; this.src='https://placehold.co/800x500/eeeeee/7f8c8d?text=Нет+фото'">
+                        <div class="car-info">
+                            <div class="car-price">${formattedPrice} TJS</div>
+                            <h2 class="car-title">${car.brand} ${car.model}, ${car.year}</h2>
+                            ${badge}
+                            <div style="font-size: 13px; color: #555; margin-bottom: 8px;">
+                                ${car.body} • ${car.fuel} • ${car.transmission}
+                            </div>
+                            <div class="seller-info">${sellerTitle}</div>
+                            <div class="location-info">📍 ${car.location}</div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function openDetails(id) {
+            const car = cars.find(c => c.id === id);
+            const badge = car.isDealership ? '<span class="badge badge-dealer" style="font-size: 16px;">✓ Официальный Автосалон</span>' : '<span class="badge badge-private" style="font-size: 16px;">⚠️ Частное лицо</span>';
+            const formattedPrice = car.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+            const sellerLabel = car.isDealership ? 'Название автосалона:' : 'Имя продавца:';
+
+            document.getElementById('details-content').innerHTML = `
+                <div class="details-img">
+                    <img src="${car.img}" alt="${car.model}" onerror="this.onerror=null; this.src='https://placehold.co/800x500/eeeeee/7f8c8d?text=Нет+фото'">
+                </div>
+                <div class="details-info">
+                    <h1>${car.brand} ${car.model}, ${car.year} год</h1>
+                    <h2 class="car-price" style="font-size: 36px; margin: 15px 0;">${formattedPrice} TJS</h2>
+                    ${badge}
+                    
+                    <h3 style="margin-top: 25px;">Характеристики автомобиля:</h3>
+                    <div class="specs-grid">
+                        <div class="spec-item"><span class="spec-label">Марка</span><span class="spec-value">${car.brand}</span></div>
+                        <div class="spec-item"><span class="spec-label">Модель</span><span class="spec-value">${car.model}</span></div>
+                        <div class="spec-item"><span class="spec-label">Год выпуска</span><span class="spec-value">${car.year}</span></div>
+                        <div class="spec-item"><span class="spec-label">Тип кузова</span><span class="spec-value">${car.body}</span></div>
+                        <div class="spec-item"><span class="spec-label">Тип двигателя</span><span class="spec-value">${car.fuel}</span></div>
+                        <div class="spec-item"><span class="spec-label">Объем</span><span class="spec-value">${car.engine}</span></div>
+                        <div class="spec-item"><span class="spec-label">Мощность</span><span class="spec-value">${car.power}</span></div>
+                        <div class="spec-item"><span class="spec-label">Коробка</span><span class="spec-value">${car.transmission}</span></div>
+                        <div class="spec-item"><span class="spec-label">Привод</span><span class="spec-value">${car.drive}</span></div>
+                    </div>
+
+                    <div class="contact-box">
+                        <h3>Контакты:</h3>
+                        <p style="margin: 10px 0; font-size: 18px;"><strong>${sellerLabel}</strong> ${car.seller}</p>
+                        <p style="margin: 10px 0; font-size: 16px;"><strong>Осмотр машины:</strong> 📍 ${car.location}</p>
+                        <h2 style="color: var(--dark); margin-top: 15px;">📞 ${car.phone}</h2>
+                    </div>
+                </div>
+            `;
+            switchView('details');
+            window.scrollTo(0, 0); 
+        }
+
+        function handleAddCar(e) {
+            e.preventDefault();
+
+            const modelInput = document.getElementById('add-model').value.trim();
+            const engineInput = document.getElementById('add-engine').value.trim();
+            const powerInput = document.getElementById('add-power').value.trim();
+            const nameInput = document.getElementById('add-name').value.trim();
+            const locationInput = document.getElementById('add-location').value.trim();
+            const phoneInput = document.getElementById('add-phone').value.trim();
+            const photoInput = document.getElementById('add-photo').value.trim();
+
+            // 1. Запрет ссылок
+            const textFields = [modelInput, engineInput, powerInput, nameInput, locationInput, phoneInput];
+            const urlPattern = /(http(s)?:\/\/|www\.)/i;
+            for (let text of textFields) {
+                if (urlPattern.test(text)) {
+                    alert("Ошибка: В текстовые поля запрещено вставлять ссылки!");
+                    return; 
+                }
+            }
+
+            // 2. Фильтр мусора и мата
+            const badWords = ['huy', 'хуй', 'хер', 'пидор', 'pidor', 'лох', 'сука', 'бля', 'далбаеб', 'bot', 'бот', 'test', 'тест', 'spam', 'спам']; 
+            const nameLower = nameInput.toLowerCase();
+            const modelLower = modelInput.toLowerCase();
+            
+            if (badWords.some(word => nameLower.includes(word) || modelLower.includes(word))) {
+                alert("Ошибка: Использованы недопустимые слова в имени или модели.");
+                return;
+            }
+
+            const nameRegex = /^[A-Za-zА-Яа-яЁё\s\-]{3,50}$/;
+            if (!nameRegex.test(nameInput)) {
+                alert("Ошибка: Имя продавца должно состоять только из реальных букв (минимум 3).");
+                return;
+            }
+
+            if (modelInput.length < 2 || modelInput.length > 30) {
+                alert("Ошибка: Некорректное название модели.");
+                return;
+            }
+
+            // 3. Проверка ОБЪЕМА двигателя (Максимум 28 л)
+            const cleanEngineStr = engineInput.replace(/,/g, '.').replace(/[^\d.]/g, '');
+            const engineNum = parseFloat(cleanEngineStr);
+            
+            if (engineInput.length > 10 || isNaN(engineNum) || engineNum < 0.5 || engineNum > 28.0) {
+                alert("Ошибка: Объем двигателя указан неверно. Введите число от 0.5 до 28 (например: 2.5 или 2.5 л).");
+                return;
+            }
+
+            // 4. Проверка МОЩНОСТИ (Максимум 2300 л.с.)
+            const cleanPowerStr = powerInput.replace(/[^\d]/g, '');
+            const powerNum = parseInt(cleanPowerStr);
+            
+            if (powerInput.length > 15 || isNaN(powerNum) || powerNum < 20 || powerNum > 2300) {
+                alert("Ошибка: Мощность указана неверно. Введите число от 20 до 2300 (например: 200 л.с.).");
+                return;
+            }
+
+            // 5. Проверка АДРЕСА
+            if (!/[A-Za-zА-Яа-яЁё]/.test(locationInput) || locationInput.length < 4) {
+                alert("Ошибка: Адрес осмотра должен содержать буквы (названия улиц, районов или городов).");
+                return;
+            }
+
+            // 6. Валидация фото
+            try {
+                const url = new URL(photoInput);
+                if (url.protocol !== "http:" && url.protocol !== "https:") {
+                    throw new Error("Неверный протокол");
+                }
+            } catch (error) {
+                alert("Ошибка: Ссылка на фото написана неправильно. Она должна начинаться с http:// или https://");
+                return;
+            }
+
+            // Сохранение
+            const newCar = { 
+                id: new Date().getTime(), 
+                brand: document.getElementById('add-brand').value,
+                model: escapeHTML(modelInput),
+                price: parseInt(document.getElementById('add-price').value),
+                year: parseInt(document.getElementById('add-year').value),
+                body: document.getElementById('add-body').value,
+                fuel: document.getElementById('add-fuel').value,
+                engine: engineNum.toFixed(1) + ' л',
+                power: powerNum + ' л.с.',
+                transmission: document.getElementById('add-transmission').value,
+                drive: document.getElementById('add-drive').value,
+                img: photoInput,
+                seller: escapeHTML(nameInput),
+                location: escapeHTML(locationInput),
+                phone: escapeHTML(phoneInput),
+                isDealership: false
+            };
+
+            cars.unshift(newCar);
+            saveToStorage();
+            
+            alert('Машина успешно добавлена!');
+            document.querySelector('form').reset();
+            document.getElementById('filter-brand').value = 'all'; 
+            renderCars();
+            switchView('home');
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewName).classList.add('active');
+        }
+
+        renderCars();
+    </script>
+</body>
+</html>
